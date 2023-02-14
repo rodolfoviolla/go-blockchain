@@ -21,6 +21,7 @@ type BlockChainIterator struct {
 func InitBlockChain() *BlockChain {
 	var lastHash []byte
 	opts := badger.DefaultOptions(dbPath)
+	opts.Logger = nil
 	db, err := badger.Open(opts)
 	ErrorHandler(err)
 	err = db.Update(func(txn *badger.Txn) error {

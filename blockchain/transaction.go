@@ -54,8 +54,8 @@ func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction
 	if acc < amount {
 		log.Panic("Error: not enough funds")
 	}
-	for txid, outs := range validOutputs {
-		txID, err := hex.DecodeString(txid)
+	for encodedTxID, outs := range validOutputs {
+		txID, err := hex.DecodeString(encodedTxID)
 		ErrorHandler(err)
 		for _, out := range outs {
 			input := TxInput{txID, out, from}

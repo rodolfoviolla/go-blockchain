@@ -14,9 +14,9 @@ type CommandLine struct {}
 
 func (cli *CommandLine) printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println(" getbalance -address ADDRESS            - Gets the balance for an address")
-	fmt.Println(" createblockchain -address ADDRESS      - Creates a blockchain and sends genesis reward to address")
-	fmt.Println(" printchain                             - Prints the blocks in the chain")
+	fmt.Println(" get-balance -address ADDRESS           - Gets the balance for an address")
+	fmt.Println(" create-blockchain -address ADDRESS     - Creates a blockchain and sends genesis reward to address")
+	fmt.Println(" print-chain                            - Prints the blocks in the chain")
 	fmt.Println(" send - from FROM -to TO -amount AMOUNT - Send amount of coins")
 }
 
@@ -28,7 +28,7 @@ func (cli * CommandLine) validateArgs() {
 }
 
 func (cli *CommandLine) printChain() {
-	chain := blockchain.ContinueBlockChain("")
+	chain := blockchain.ContinueBlockChain()
 	defer chain.Database.Close()
 	iterator := chain.Iterator()
 	for {
@@ -52,18 +52,18 @@ func (cli *CommandLine) createBlockChain(address string) {
 }
 
 func (cli *CommandLine) getBalance(address string) {
-	chain := blockchain.ContinueBlockChain(address)
+	chain := blockchain.ContinueBlockChain()
 	defer chain.Database.Close()
 	balance := 0
-	UTXOs := chain.FindUTXO(address)
-	for _, out := range UTXOs {
+	unspentTransactionsOutput := chain.FindUnspentTransactionsOutputs(address)
+	for _, out := range unspentTransactionsOutput {
 		balance += out.Value
 	}
 	fmt.Printf("Balance of %s: %d\n", address, balance)
 }
 
 func (cli *CommandLine) send(from, to string, amount int) {
-	chain := blockchain.ContinueBlockChain(from)
+	chain := blockchain.ContinueBlockChain()
 	defer chain.Database.Close()
 	tx := blockchain.NewTransaction(from, to, amount, chain)
 	chain.AddBlock([]*blockchain.Transaction{tx})
@@ -72,26 +72,26 @@ func (cli *CommandLine) send(from, to string, amount int) {
 
 func (cli *CommandLine) run() {
 	cli.validateArgs()
-	getBalanceCmd := flag.NewFlagSet("getbalance", flag.ExitOnError)
-	createBlockChainCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
+	getBalanceCmd := flag.NewFlagSet("get-balance", flag.ExitOnError)
+	createBlockChainCmd := flag.NewFlagSet("create-blockchain", flag.ExitOnError)
 	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
-	printChainCmd := flag.NewFlagSet("printchain", flag.ExitOnError)
+	printChainCmd := flag.NewFlagSet("print-chain", flag.ExitOnError)
 	getBalanceAddress := getBalanceCmd.String("address", "", "The address to get balance for")
 	createBlockChainAddress := createBlockChainCmd.String("address", "", "The address to send genesis block reward to")
 	sendFrom := sendCmd.String("from", "", "Source wallet address")
 	sendTo := sendCmd.String("to", "", "Destination wallet address")
 	sendAmount := sendCmd.String("amount", "", "Amount to send")
 	switch os.Args[1] {
-		case "getbalance":
+		case "get-balance":
 			err := getBalanceCmd.Parse(os.Args[2:])
 			blockchain.ErrorHandler(err)
-		case "createblockchain":
+		case "create-blockchain":
 			err := createBlockChainCmd.Parse(os.Args[2:])
 			blockchain.ErrorHandler(err)
 		case "send":
 			err := sendCmd.Parse(os.Args[2:])
 			blockchain.ErrorHandler(err)
-		case "printchain":
+		case "print-chain":
 			err := printChainCmd.Parse(os.Args[2:])
 			blockchain.ErrorHandler(err)
 		default:

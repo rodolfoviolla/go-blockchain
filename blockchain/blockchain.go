@@ -32,7 +32,7 @@ func DBExists() bool {
 	return true
 }
 
-func ContinueBlockChain(address string) *BlockChain {
+func ContinueBlockChain() *BlockChain {
 	var lastHash []byte
 	if !DBExists() {
 		fmt.Println("No existing blockchain found, create one!")
@@ -66,8 +66,8 @@ func InitBlockChain(address string) *BlockChain {
 	db, err := badger.Open(opts)
 	ErrorHandler(err)
 	err = db.Update(func(txn *badger.Txn) error {
-		cbtx := CoinbaseTx(address, genesisData)
-		genesis := Genesis(cbtx)
+		coinbaseTx := CoinbaseTx(address, genesisData)
+		genesis := Genesis(coinbaseTx)
 		fmt.Println("Genesis created")
 		err = txn.Set(genesis.Hash, genesis.Serialize())
 		ErrorHandler(err)
@@ -106,7 +106,7 @@ func (chain *BlockChain) Iterator() *BlockChainIterator {
 	return &BlockChainIterator{chain.LastHash, chain.Database}
 }
 
-func (iterator *BlockChainIterator) Next() * Block {
+func (iterator *BlockChainIterator) Next() *Block {
 	var block *Block
 	err := iterator.Database.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(iterator.CurrentHash)
@@ -161,17 +161,17 @@ func (chain *BlockChain) FindUnspentTransactions(address string) []Transaction {
 	return unspentTxs
 }
 
-func (chain *BlockChain) FindUTXO(address string) []TxOutput {
-	var UTXOs []TxOutput
+func (chain *BlockChain) FindUnspentTransactionsOutputs(address string) []TxOutput {
+	var unspentTransactionsOutput []TxOutput
 	unspentTransactions := chain.FindUnspentTransactions(address)
 	for _, tx := range unspentTransactions {
 		for _, out := range tx.Outputs {
 			if out.CanBeUnlocked(address) {
-				UTXOs = append(UTXOs, out)
+				unspentTransactionsOutput = append(unspentTransactionsOutput, out)
 			}
 		}
 	}
-	return UTXOs
+	return unspentTransactionsOutput
 }
 
 func (chain *BlockChain) FindSpendableOutputs(address string, amount int) (int, map[string][]int) {

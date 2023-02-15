@@ -1,8 +1,9 @@
 package wallet
 
 import (
+	"log"
+
 	"github.com/mr-tron/base58"
-	"github.com/rodolfoviolla/go-blockchain/blockchain"
 )
 
 func Base58Encode(input []byte) []byte {
@@ -11,6 +12,12 @@ func Base58Encode(input []byte) []byte {
 
 func Base58Decode(input []byte) []byte {
 	decode, err := base58.Decode(string(input[:]))
-	blockchain.ErrorHandler(err)
+	ErrorHandler(err)
 	return decode
+}
+
+func ErrorHandler(err error) {
+	if err != nil {
+		log.Panic(err)
+	}
 }

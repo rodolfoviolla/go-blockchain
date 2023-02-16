@@ -39,23 +39,16 @@ func (tx Transaction) Serialize() []byte {
 	return encoded.Bytes()
 }
 
-func (tx *Transaction) SetID() {
-	var encoded bytes.Buffer
-	var hash[32]byte
-	encode := gob.NewEncoder(&encoded)
-	handler.ErrorHandler(encode.Encode(tx))
-	hash = sha256.Sum256(encoded.Bytes())
-	tx.ID = hash[:]
-}
-
 func CoinbaseTx(to, data string) *Transaction {
 	if data == "" {
-		data = fmt.Sprintf("Coins to %s", to)
+		randomData := make([]byte, 24)
+		handler.ErrorHandler(rand.Read(randomData))
+		data = fmt.Sprintf("%x", randomData)
 	}
 	txIn := TxInput{[]byte{}, -1, nil, []byte(data)}
-	txOut := *NewTXOutput(100, to)
+	txOut := *NewTXOutput(20, to)
 	tx := Transaction{nil, []TxInput{txIn}, []TxOutput{txOut}}
-	tx.SetID()
+	tx.ID = tx.Hash()
 	return &tx
 }
 

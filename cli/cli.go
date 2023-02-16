@@ -100,7 +100,7 @@ func (cli *CommandLine) createBlockChain(address string) {
 		log.Panic("Address is not valid")
 	}
 	chain := blockchain.InitBlockChain(address)
-	chain.Database.Close()
+	defer chain.Database.Close()
 	unspentTxOutputsSet := blockchain.UnspentTxOutputsSet{Blockchain: chain}
 	unspentTxOutputsSet.ReIndex()
 	fmt.Println(color.Green + "Finished!")
@@ -134,7 +134,8 @@ func (cli *CommandLine) send(from, to string, amount int) {
 	unspentTxOutputsSet := blockchain.UnspentTxOutputsSet{Blockchain: chain}
 	defer chain.Database.Close()
 	tx := blockchain.NewTransaction(from, to, amount, &unspentTxOutputsSet)
-	block := chain.AddBlock([]*blockchain.Transaction{tx})
+	coinbaseTx := blockchain.CoinbaseTx(from, "")
+	block := chain.AddBlock([]*blockchain.Transaction{coinbaseTx, tx})
 	unspentTxOutputsSet.Update(block)
 	fmt.Println(color.Green + "Success!")
 }

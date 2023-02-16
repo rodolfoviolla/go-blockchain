@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/rodolfoviolla/go-blockchain/color"
+	"github.com/rodolfoviolla/go-blockchain/handler"
 	"github.com/rodolfoviolla/go-blockchain/wallet"
 )
 
@@ -34,8 +35,7 @@ func (tx *Transaction) Hash() []byte {
 func (tx Transaction) Serialize() []byte {
 	var encoded bytes.Buffer
 	enc := gob.NewEncoder(&encoded)
-	err := enc.Encode(tx)
-	ErrorHandler(err)
+	handler.ErrorHandler(enc.Encode(tx))
 	return encoded.Bytes()
 }
 
@@ -43,8 +43,7 @@ func (tx *Transaction) SetID() {
 	var encoded bytes.Buffer
 	var hash[32]byte
 	encode := gob.NewEncoder(&encoded)
-	err := encode.Encode(tx)
-	ErrorHandler(err)
+	handler.ErrorHandler(encode.Encode(tx))
 	hash = sha256.Sum256(encoded.Bytes())
 	tx.ID = hash[:]
 }
@@ -63,8 +62,7 @@ func CoinbaseTx(to, data string) *Transaction {
 func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction {
 	var inputs []TxInput
 	var outputs []TxOutput
-	wallets, err := wallet.CreateWallets()
-	ErrorHandler(err)
+	wallets := handler.ErrorHandler(wallet.CreateWallets())
 	w := wallets.GetWallet(from)
 	pubKeyHash := wallet.PublicKeyHash(w.PublicKey)
 	acc, validOutputs := chain.FindSpendableOutputs(pubKeyHash, amount)
@@ -72,8 +70,7 @@ func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction
 		log.Panic("Error: not enough funds")
 	}
 	for encodedTxID, outs := range validOutputs {
-		txID, err := hex.DecodeString(encodedTxID)
-		ErrorHandler(err)
+		txID := handler.ErrorHandler(hex.DecodeString(encodedTxID))
 		for _, out := range outs {
 			input := TxInput{txID, out, nil, w.PublicKey}
 			inputs = append(inputs, input)
@@ -114,7 +111,7 @@ func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transac
 	for inId, in := range txCopy.Inputs {
 		hashTransactionID(&txCopy, prevTXs, in, inId)
 		r, s, err := ecdsa.Sign(rand.Reader, &privKey, txCopy.ID)
-		ErrorHandler(err)
+		handler.ErrorHandler(err)
 		signature := append(r.Bytes(), s.Bytes()...)
 		tx.Inputs[inId].Signature = signature
 	}
@@ -144,7 +141,7 @@ func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
 		hashTransactionID(&txCopy, prevTXs, in, inId)
 		r, s := formatBytes(in.Signature)
 		x, y := formatBytes(in.PubKey)
-		rawPubKey := ecdsa.PublicKey{curve, &x, &y}
+		rawPubKey := ecdsa.PublicKey{Curve: curve, X: &x, Y: &y}
 		if !ecdsa.Verify(&rawPubKey, txCopy.ID, &r, &s) {
 			return false
 		}

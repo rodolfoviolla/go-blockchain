@@ -10,6 +10,7 @@ import (
 	"runtime"
 
 	"github.com/dgraph-io/badger/v3"
+	"github.com/rodolfoviolla/go-blockchain/handler"
 )
 
 const (
@@ -43,18 +44,15 @@ func ContinueBlockChain() *BlockChain {
 	}
 	opts := badger.DefaultOptions(dbPath)
 	opts.Logger = nil
-	db, err := badger.Open(opts)
-	ErrorHandler(err)
-	err = db.Update(func(txn *badger.Txn) error {
-		item, err := txn.Get([]byte("lh"))
-		ErrorHandler(err)
-		err = item.Value(func (val []byte) error {
+	db := handler.ErrorHandler(badger.Open(opts))
+	handler.ErrorHandler(db.Update(func(txn *badger.Txn) error {
+		item := handler.ErrorHandler(txn.Get([]byte("lh")))
+		err := item.Value(func (val []byte) error {
 			lastHash = val
 			return nil
 		})
 		return err
-	})
-	ErrorHandler(err)
+	}))
 	return &BlockChain{lastHash, db}
 }
 
@@ -66,43 +64,36 @@ func InitBlockChain(address string) *BlockChain {
 	}
 	opts := badger.DefaultOptions(dbPath)
 	opts.Logger = nil
-	db, err := badger.Open(opts)
-	ErrorHandler(err)
-	err = db.Update(func(txn *badger.Txn) error {
+	db := handler.ErrorHandler(badger.Open(opts))
+	handler.ErrorHandler(db.Update(func(txn *badger.Txn) error {
 		coinbaseTx := CoinbaseTx(address, genesisData)
 		genesis := Genesis(coinbaseTx)
 		fmt.Println("Genesis created")
-		err = txn.Set(genesis.Hash, genesis.Serialize())
-		ErrorHandler(err)
-		err = txn.Set([]byte("lh"), genesis.Hash)
+		handler.ErrorHandler(txn.Set(genesis.Hash, genesis.Serialize()))
+		err := txn.Set([]byte("lh"), genesis.Hash)
 		lastHash = genesis.Hash
 		return err
-	})
-	ErrorHandler(err)
+	}))
 	return &BlockChain{lastHash, db}
 }
 
 func (chain *BlockChain) AddBlock(transaction []*Transaction) {
 	var lastHash []byte
-	err := chain.Database.View(func(txn *badger.Txn) error {
-		item, err := txn.Get([]byte("lh"))
-		ErrorHandler(err)
-		err = item.Value(func(val []byte) error {
+	handler.ErrorHandler(chain.Database.View(func(txn *badger.Txn) error {
+		item := handler.ErrorHandler(txn.Get([]byte("lh")))
+		err := item.Value(func(val []byte) error {
 			lastHash = val
 			return nil
 		})
 		return err
-	})
-	ErrorHandler(err)
+	}))
 	newBlock := CreateBlock(transaction, lastHash)
-	err = chain.Database.Update(func(txn *badger.Txn) error {
-		err := txn.Set(newBlock.Hash, newBlock.Serialize())
-		ErrorHandler(err)
-		err = txn.Set([]byte("lh"), newBlock.Hash)
+	handler.ErrorHandler(chain.Database.Update(func(txn *badger.Txn) error {
+		handler.ErrorHandler(txn.Set(newBlock.Hash, newBlock.Serialize()))
+		err := txn.Set([]byte("lh"), newBlock.Hash)
 		chain.LastHash = newBlock.Hash
 		return err
-	})
-	ErrorHandler(err)
+	}))
 }
 
 func (chain *BlockChain) Iterator() *BlockChainIterator {
@@ -111,18 +102,16 @@ func (chain *BlockChain) Iterator() *BlockChainIterator {
 
 func (iterator *BlockChainIterator) Next() *Block {
 	var block *Block
-	err := iterator.Database.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(iterator.CurrentHash)
-		ErrorHandler(err)
+	handler.ErrorHandler(iterator.Database.View(func(txn *badger.Txn) error {
+		item := handler.ErrorHandler(txn.Get(iterator.CurrentHash))
 		var encodedBlock []byte
-		err = item.Value(func(val []byte) error{
+		err := item.Value(func(val []byte) error{
 			encodedBlock = val
 			return nil
 		})
 		block = Deserialize(encodedBlock)
 		return err
-	})
-	ErrorHandler(err)
+	}))
 	iterator.CurrentHash = block.PrevHash
 	return block
 }
@@ -216,8 +205,7 @@ func (bc *BlockChain) FindTransaction(ID []byte) (Transaction, error) {
 func (bc *BlockChain) getPreviousTransactions(tx *Transaction) (prevTXs map[string]Transaction) {
 	prevTXs = make(map[string]Transaction)
 	for _, in := range tx.Inputs {
-		prevTX, err := bc.FindTransaction(in.ID)
-		ErrorHandler(err)
+		prevTX := handler.ErrorHandler(bc.FindTransaction(in.ID))
 		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
 	}
 	return

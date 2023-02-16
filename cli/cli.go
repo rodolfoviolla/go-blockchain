@@ -10,6 +10,7 @@ import (
 
 	"github.com/rodolfoviolla/go-blockchain/blockchain"
 	"github.com/rodolfoviolla/go-blockchain/color"
+	"github.com/rodolfoviolla/go-blockchain/handler"
 	"github.com/rodolfoviolla/go-blockchain/wallet"
 )
 
@@ -124,23 +125,17 @@ func (cli *CommandLine) Run() {
 	sendAmount := sendCmd.Int("amount", 0, "Amount to send")
 	switch os.Args[1] {
 		case "get-balance":
-			err := getBalanceCmd.Parse(os.Args[2:])
-			blockchain.ErrorHandler(err)
+			handler.ErrorHandler(getBalanceCmd.Parse(os.Args[2:]))
 		case "create-blockchain":
-			err := createBlockChainCmd.Parse(os.Args[2:])
-			blockchain.ErrorHandler(err)
+			handler.ErrorHandler(createBlockChainCmd.Parse(os.Args[2:]))
 		case "send":
-			err := sendCmd.Parse(os.Args[2:])
-			blockchain.ErrorHandler(err)
+			handler.ErrorHandler(sendCmd.Parse(os.Args[2:]))
 		case "print-chain":
-			err := printChainCmd.Parse(os.Args[2:])
-			blockchain.ErrorHandler(err)
+			handler.ErrorHandler(printChainCmd.Parse(os.Args[2:]))
 		case "create-wallet":
-			err := createWalletCmd.Parse(os.Args[2:])
-			blockchain.ErrorHandler(err)
+			handler.ErrorHandler(createWalletCmd.Parse(os.Args[2:]))
 		case "list-addresses":
-			err := listAddressesCmd.Parse(os.Args[2:])
-			blockchain.ErrorHandler(err)
+			handler.ErrorHandler(listAddressesCmd.Parse(os.Args[2:]))
 		default:
 			cli.printUsage()
 			runtime.Goexit()

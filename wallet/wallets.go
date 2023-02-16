@@ -5,6 +5,8 @@ import (
 	"crypto/elliptic"
 	"encoding/gob"
 	"os"
+
+	"github.com/rodolfoviolla/go-blockchain/handler"
 )
 
 const walletFile = "./tmp/wallets.data"
@@ -61,8 +63,6 @@ func (ws *Wallets) SaveFile() {
 	var content bytes.Buffer
 	gob.Register(elliptic.P256())
 	encoder := gob.NewEncoder(&content)
-	err := encoder.Encode(ws)
-	ErrorHandler(err)
-	err = os.WriteFile(walletFile, content.Bytes(), 0644)
-	ErrorHandler(err)
+	handler.ErrorHandler(encoder.Encode(ws))
+	handler.ErrorHandler(os.WriteFile(walletFile, content.Bytes(), 0644))
 }

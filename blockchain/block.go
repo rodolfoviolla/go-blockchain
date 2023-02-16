@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
-	"log"
+
+	"github.com/rodolfoviolla/go-blockchain/handler"
 )
 type Block struct {
 	Hash []byte
@@ -39,21 +40,13 @@ func Genesis(coinbase *Transaction) *Block {
 func (b *Block) Serialize() []byte {
 	var res bytes.Buffer
 	encoder := gob.NewEncoder(&res)
-	err := encoder.Encode((b))
-	ErrorHandler(err)
+	handler.ErrorHandler(encoder.Encode((b)))
 	return res.Bytes()
 }
 
 func Deserialize(data []byte) *Block {
 	var block Block
 	decoder := gob.NewDecoder(bytes.NewReader(data))
-	err := decoder.Decode(&block)
-	ErrorHandler(err)
+	handler.ErrorHandler(decoder.Decode(&block))
 	return &block
-}
-
-func ErrorHandler(err error) {
-	if err != nil {
-		log.Panic(err)
-	}
 }

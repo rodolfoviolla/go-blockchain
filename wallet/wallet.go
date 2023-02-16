@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 
+	"github.com/rodolfoviolla/go-blockchain/handler"
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -39,8 +40,7 @@ func ValidateAddress(address string) bool {
 
 func NewKeyPair() (ecdsa.PrivateKey, []byte) {
 	curve := elliptic.P256()
-	private, err := ecdsa.GenerateKey(curve, rand.Reader)
-	ErrorHandler(err)
+	private := handler.ErrorHandler(ecdsa.GenerateKey(curve, rand.Reader))
 	pub := append(private.PublicKey.X.Bytes(), private.PublicKey.Y.Bytes()...)
 	return *private, pub
 }
@@ -53,8 +53,7 @@ func MakeWallet() *Wallet {
 func PublicKeyHash(pubKey []byte) []byte {
 	pubHash := sha256.Sum256(pubKey)
 	hasher := ripemd160.New()
-	_, err := hasher.Write(pubHash[:])
-	ErrorHandler(err)
+	handler.ErrorHandler(hasher.Write(pubHash[:]))
 	return hasher.Sum(nil)
 }
 

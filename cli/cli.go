@@ -26,6 +26,7 @@ func (cli *CommandLine) printUsage() {
 	fmt.Println(color.Green + "  send " + color.Cyan + "-from " + color.Yellow + "FROM " + color.Cyan + "-to " + color.Yellow + "TO " + color.Cyan + "-amount " + color.Yellow + "AMOUNT  " + color.Reset + "- Send amount of coins")
 	fmt.Println(color.Green + "  create-wallet                          " + color.Reset + "- Creates a new wallet")
 	fmt.Println(color.Green + "  list-addresses                         " + color.Reset + "- List the addresses in our wallet file")
+	fmt.Println(color.Green + "  reindex-utxo                           " + color.Reset + "- Rebuilds the unspent transaction outputs set")
 }
 
 func (cli * CommandLine) validateArgs() {
@@ -33,6 +34,15 @@ func (cli * CommandLine) validateArgs() {
 		cli.printUsage()
 		runtime.Goexit()
 	}
+}
+
+func (cli *CommandLine) reIndexUnspentTxOutputs() {
+	chain := blockchain.ContinueBlockChain()
+	defer chain.Database.Close()
+	unspentTxOutputsSet := blockchain.UnspentTxOutputsSet{Blockchain: chain}
+	unspentTxOutputsSet.ReIndex()
+	count := unspentTxOutputsSet.CountTransactions()
+	fmt.Printf(color.Green + "Done! There are " + color.Reset + "%d" + color.Green + " transactions in the unspent transaction outputs set.\n", count)
 }
 
 func (cli *CommandLine) createWallet() {
@@ -77,6 +87,8 @@ func (cli *CommandLine) createBlockChain(address string) {
 	}
 	chain := blockchain.InitBlockChain(address)
 	chain.Database.Close()
+	unspentTxOutputsSet := blockchain.UnspentTxOutputsSet{Blockchain: chain}
+	unspentTxOutputsSet.ReIndex()
 	fmt.Println(color.Green + "Finished!")
 }
 
@@ -85,11 +97,12 @@ func (cli *CommandLine) getBalance(address string) {
 		log.Panic("Address is not valid")
 	}
 	chain := blockchain.ContinueBlockChain()
+	unspentTxOutputsSet := blockchain.UnspentTxOutputsSet{Blockchain: chain}
 	defer chain.Database.Close()
 	balance := 0
 	pubKeyHash := wallet.Base58Decode([]byte(address))
 	pubKeyHash = pubKeyHash[1:len(pubKeyHash)-4]
-	unspentTransactionsOutput := chain.FindUnspentTransactionsOutputs(pubKeyHash)
+	unspentTransactionsOutput := unspentTxOutputsSet.FindUnspentTransactions(pubKeyHash)
 	for _, out := range unspentTransactionsOutput {
 		balance += out.Value
 	}
@@ -104,9 +117,11 @@ func (cli *CommandLine) send(from, to string, amount int) {
 		log.Panic("From address is not valid")
 	}
 	chain := blockchain.ContinueBlockChain()
+	unspentTxOutputsSet := blockchain.UnspentTxOutputsSet{Blockchain: chain}
 	defer chain.Database.Close()
-	tx := blockchain.NewTransaction(from, to, amount, chain)
-	chain.AddBlock([]*blockchain.Transaction{tx})
+	tx := blockchain.NewTransaction(from, to, amount, &unspentTxOutputsSet)
+	block := chain.AddBlock([]*blockchain.Transaction{tx})
+	unspentTxOutputsSet.Update(block)
 	fmt.Println(color.Green + "Success!")
 }
 
@@ -118,6 +133,7 @@ func (cli *CommandLine) Run() {
 	printChainCmd := flag.NewFlagSet("print-chain", flag.ExitOnError)
 	createWalletCmd := flag.NewFlagSet("create-wallet", flag.ExitOnError)
 	listAddressesCmd := flag.NewFlagSet("list-addresses", flag.ExitOnError)
+	reIndexUnspentTxOutputsCmd := flag.NewFlagSet("reindex-utxo", flag.ExitOnError)
 	getBalanceAddress := getBalanceCmd.String("address", "", "The address to get balance for")
 	createBlockChainAddress := createBlockChainCmd.String("address", "", "The address to send genesis block reward to")
 	sendFrom := sendCmd.String("from", "", "Source wallet address")
@@ -136,6 +152,8 @@ func (cli *CommandLine) Run() {
 			handler.ErrorHandler(createWalletCmd.Parse(os.Args[2:]))
 		case "list-addresses":
 			handler.ErrorHandler(listAddressesCmd.Parse(os.Args[2:]))
+		case "reindex-utxo":
+			handler.ErrorHandler(reIndexUnspentTxOutputsCmd.Parse(os.Args[2:]))
 		default:
 			cli.printUsage()
 			runtime.Goexit()
@@ -169,5 +187,8 @@ func (cli *CommandLine) Run() {
 	}
 	if listAddressesCmd.Parsed() {
 		cli.listAddresses()
+	}
+	if reIndexUnspentTxOutputsCmd.Parsed() {
+		cli.reIndexUnspentTxOutputs()
 	}
 }

@@ -16,17 +16,31 @@ import (
 
 type CommandLine struct {}
 
+const (
+	GET_BALANCE = "get-balance"
+	CREATE_BLOCKCHAIN = "create-blockchain"
+	PRINT_CHAIN = "print-chain"
+	SEND = "send"
+	CREATE_WALLET = "create-wallet"
+	LIST_ADDRESSES = "list-addresses"
+	REINDEX_UTXO = "reindex-utxo"
+	ADDRESS_PARAM = "address"
+	FROM_PARAM = "from"
+	TO_PARAM = "to"
+	AMOUNT_PARAM = "amount"
+)
+
 func (cli *CommandLine) printUsage() {
 	fmt.Println(color.Purple + "Welcome to the blockchain CLI!" + color.Reset)
 	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println(color.Green + "  get-balance " + color.Cyan + "-address " + color.Yellow + "ADDRESS           " + color.Reset + "- Gets the balance for an address")
-	fmt.Println(color.Green + "  create-blockchain " + color.Cyan + "-address " + color.Yellow + "ADDRESS     " + color.Reset + "- Creates a blockchain and sends genesis reward to address")
-	fmt.Println(color.Green + "  print-chain                            " + color.Reset + "- Prints the blocks in the chain")
-	fmt.Println(color.Green + "  send " + color.Cyan + "-from " + color.Yellow + "FROM " + color.Cyan + "-to " + color.Yellow + "TO " + color.Cyan + "-amount " + color.Yellow + "AMOUNT  " + color.Reset + "- Send amount of coins")
-	fmt.Println(color.Green + "  create-wallet                          " + color.Reset + "- Creates a new wallet")
-	fmt.Println(color.Green + "  list-addresses                         " + color.Reset + "- List the addresses in our wallet file")
-	fmt.Println(color.Green + "  reindex-utxo                           " + color.Reset + "- Rebuilds the unspent transaction outputs set")
+	fmt.Println(color.Green + "  " + GET_BALANCE + " " + color.Cyan + "-" + ADDRESS_PARAM + " " + color.Yellow + "ADDRESS           " + color.Reset + "- Gets the balance for an address")
+	fmt.Println(color.Green + "  " + CREATE_BLOCKCHAIN + " " + color.Cyan + "-" + ADDRESS_PARAM + " " + color.Yellow + "ADDRESS     " + color.Reset + "- Creates a blockchain and sends genesis reward to address")
+	fmt.Println(color.Green + "  " + PRINT_CHAIN + "                            " + color.Reset + "- Prints the blocks in the chain")
+	fmt.Println(color.Green + "  " + SEND + " " + color.Cyan + "-" + FROM_PARAM + " " + color.Yellow + "FROM " + color.Cyan + "-" + TO_PARAM + " " + color.Yellow + "TO " + color.Cyan + "-" + AMOUNT_PARAM + " " + color.Yellow + "AMOUNT  " + color.Reset + "- Send amount of coins")
+	fmt.Println(color.Green + "  " + CREATE_WALLET + "                          " + color.Reset + "- Creates a new wallet")
+	fmt.Println(color.Green + "  " + LIST_ADDRESSES + "                         " + color.Reset + "- List the addresses in our wallet file")
+	fmt.Println(color.Green + "  " + REINDEX_UTXO + "                           " + color.Reset + "- Rebuilds the unspent transaction outputs set")
 }
 
 func (cli * CommandLine) validateArgs() {
@@ -127,32 +141,32 @@ func (cli *CommandLine) send(from, to string, amount int) {
 
 func (cli *CommandLine) Run() {
 	cli.validateArgs()
-	getBalanceCmd := flag.NewFlagSet("get-balance", flag.ExitOnError)
-	createBlockChainCmd := flag.NewFlagSet("create-blockchain", flag.ExitOnError)
-	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
-	printChainCmd := flag.NewFlagSet("print-chain", flag.ExitOnError)
-	createWalletCmd := flag.NewFlagSet("create-wallet", flag.ExitOnError)
-	listAddressesCmd := flag.NewFlagSet("list-addresses", flag.ExitOnError)
-	reIndexUnspentTxOutputsCmd := flag.NewFlagSet("reindex-utxo", flag.ExitOnError)
-	getBalanceAddress := getBalanceCmd.String("address", "", "The address to get balance for")
-	createBlockChainAddress := createBlockChainCmd.String("address", "", "The address to send genesis block reward to")
-	sendFrom := sendCmd.String("from", "", "Source wallet address")
-	sendTo := sendCmd.String("to", "", "Destination wallet address")
-	sendAmount := sendCmd.Int("amount", 0, "Amount to send")
+	getBalanceCmd := flag.NewFlagSet(GET_BALANCE, flag.ExitOnError)
+	createBlockChainCmd := flag.NewFlagSet(CREATE_BLOCKCHAIN, flag.ExitOnError)
+	sendCmd := flag.NewFlagSet(SEND, flag.ExitOnError)
+	printChainCmd := flag.NewFlagSet(PRINT_CHAIN, flag.ExitOnError)
+	createWalletCmd := flag.NewFlagSet(CREATE_WALLET, flag.ExitOnError)
+	listAddressesCmd := flag.NewFlagSet(LIST_ADDRESSES, flag.ExitOnError)
+	reIndexUnspentTxOutputsCmd := flag.NewFlagSet(REINDEX_UTXO, flag.ExitOnError)
+	getBalanceAddress := getBalanceCmd.String(ADDRESS_PARAM, "", "The address to get balance for")
+	createBlockChainAddress := createBlockChainCmd.String(ADDRESS_PARAM, "", "The address to send genesis block reward to")
+	sendFrom := sendCmd.String(FROM_PARAM, "", "Source wallet address")
+	sendTo := sendCmd.String(TO_PARAM, "", "Destination wallet address")
+	sendAmount := sendCmd.Int(AMOUNT_PARAM, 0, "Amount to send")
 	switch os.Args[1] {
-		case "get-balance":
+		case GET_BALANCE:
 			handler.ErrorHandler(getBalanceCmd.Parse(os.Args[2:]))
-		case "create-blockchain":
+		case CREATE_BLOCKCHAIN:
 			handler.ErrorHandler(createBlockChainCmd.Parse(os.Args[2:]))
-		case "send":
+		case SEND:
 			handler.ErrorHandler(sendCmd.Parse(os.Args[2:]))
-		case "print-chain":
+		case PRINT_CHAIN:
 			handler.ErrorHandler(printChainCmd.Parse(os.Args[2:]))
-		case "create-wallet":
+		case CREATE_WALLET:
 			handler.ErrorHandler(createWalletCmd.Parse(os.Args[2:]))
-		case "list-addresses":
+		case LIST_ADDRESSES:
 			handler.ErrorHandler(listAddressesCmd.Parse(os.Args[2:]))
-		case "reindex-utxo":
+		case REINDEX_UTXO:
 			handler.ErrorHandler(reIndexUnspentTxOutputsCmd.Parse(os.Args[2:]))
 		default:
 			cli.printUsage()

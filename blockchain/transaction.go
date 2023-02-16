@@ -13,6 +13,7 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/rodolfoviolla/go-blockchain/color"
 	"github.com/rodolfoviolla/go-blockchain/wallet"
 )
 
@@ -165,18 +166,18 @@ func (tx *Transaction) TrimmedCopy() Transaction {
 
 func (tx Transaction) String() string {
 	var lines []string
-	lines = append(lines, fmt.Sprintf("-- Transaction %x:", tx.ID))
+	lines = append(lines, fmt.Sprintf("Transaction   %x", tx.ID))
 	for i, input := range tx.Inputs {
-		lines = append(lines, fmt.Sprintf("    Input %d:", i))
-		lines = append(lines, fmt.Sprintf("      TxID:      %x", input.ID))
-		lines = append(lines, fmt.Sprintf("      Out:       %d", input.Out))
-		lines = append(lines, fmt.Sprintf("      Signature: %x", input.Signature))
-		lines = append(lines, fmt.Sprintf("      PubKey:    %x", input.PubKey))
+		lines = append(lines, fmt.Sprintf(color.Green + "  Input       %d", i))
+		lines = append(lines, fmt.Sprintf("    TxID      %x", input.ID))
+		lines = append(lines, fmt.Sprintf("    Out       %d", input.Out))
+		lines = append(lines, fmt.Sprintf("    Signature %x", input.Signature))
+		lines = append(lines, fmt.Sprintf("    PubKey    %x" + color.Reset, input.PubKey))
 	}
 	for i, output := range tx.Outputs {
-		lines = append(lines, fmt.Sprintf("    Output %d:", i))
-		lines = append(lines, fmt.Sprintf("      Value:     %d", output.Value))
-		lines = append(lines, fmt.Sprintf("      Script:    %x", output.PubKeyHash))
+		lines = append(lines, fmt.Sprintf(color.Red + "  Output      %d", i))
+		lines = append(lines, fmt.Sprintf("    Value     %d", output.Value))
+		lines = append(lines, fmt.Sprintf("    Script    %x" + color.Reset, output.PubKeyHash))
 	}
 	return strings.Join(lines, "\n")
 }

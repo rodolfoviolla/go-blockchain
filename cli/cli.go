@@ -9,19 +9,22 @@ import (
 	"strconv"
 
 	"github.com/rodolfoviolla/go-blockchain/blockchain"
+	"github.com/rodolfoviolla/go-blockchain/color"
 	"github.com/rodolfoviolla/go-blockchain/wallet"
 )
 
 type CommandLine struct {}
 
 func (cli *CommandLine) printUsage() {
+	fmt.Println(color.Purple + "Welcome to the blockchain CLI!" + color.Reset)
+	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println(" get-balance -address ADDRESS           - Gets the balance for an address")
-	fmt.Println(" create-blockchain -address ADDRESS     - Creates a blockchain and sends genesis reward to address")
-	fmt.Println(" print-chain                            - Prints the blocks in the chain")
-	fmt.Println(" send - from FROM -to TO -amount AMOUNT - Send amount of coins")
-	fmt.Println(" create-wallet                          - Creates a new wallet")
-	fmt.Println(" list-addresses                         - List the addresses in our wallet file")
+	fmt.Println(color.Green + "  get-balance " + color.Cyan + "-address " + color.Yellow + "ADDRESS           " + color.Reset + "- Gets the balance for an address")
+	fmt.Println(color.Green + "  create-blockchain " + color.Cyan + "-address " + color.Yellow + "ADDRESS     " + color.Reset + "- Creates a blockchain and sends genesis reward to address")
+	fmt.Println(color.Green + "  print-chain                            " + color.Reset + "- Prints the blocks in the chain")
+	fmt.Println(color.Green + "  send " + color.Cyan + "-from " + color.Yellow + "FROM " + color.Cyan + "-to " + color.Yellow + "TO " + color.Cyan + "-amount " + color.Yellow + "AMOUNT  " + color.Reset + "- Send amount of coins")
+	fmt.Println(color.Green + "  create-wallet                          " + color.Reset + "- Creates a new wallet")
+	fmt.Println(color.Green + "  list-addresses                         " + color.Reset + "- List the addresses in our wallet file")
 }
 
 func (cli * CommandLine) validateArgs() {
@@ -35,14 +38,14 @@ func (cli *CommandLine) createWallet() {
 	wallets, _ := wallet.CreateWallets()
 	address := wallets.AddWallet()
 	wallets.SaveFile()
-	fmt.Printf("New address is: %s\n", address)
+	fmt.Printf("New address is: " + color.Yellow + "%s\n", address)
 }
 
 func (cli *CommandLine) listAddresses() {
 	wallets, _ := wallet.CreateWallets()
 	addresses := wallets.GetAllAddresses()
 	for _, address := range addresses {
-		fmt.Println(address)
+		fmt.Println(color.Yellow + address)
 	}
 }
 
@@ -53,10 +56,10 @@ func (cli *CommandLine) printChain() {
 	for {
 		block := iterator.Next()
 		fmt.Println()
-		fmt.Printf("Previous Hash: %x\n", block.PrevHash)
-		fmt.Printf("Hash: %x\n", block.Hash)
+		fmt.Printf(color.Cyan + "Previous Hash %x\n", block.PrevHash)
+		fmt.Printf("Hash          %x\n", block.Hash)
 		pow := blockchain.NewProof(block)
-		fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
+		fmt.Printf("PoW           %s\n" + color.Reset, strconv.FormatBool(pow.Validate()))
 		for _, tx := range block.Transactions {
 			fmt.Println(tx)
 		}
@@ -73,7 +76,7 @@ func (cli *CommandLine) createBlockChain(address string) {
 	}
 	chain := blockchain.InitBlockChain(address)
 	chain.Database.Close()
-	fmt.Println("Finished!")
+	fmt.Println(color.Green + "Finished!")
 }
 
 func (cli *CommandLine) getBalance(address string) {
@@ -89,7 +92,7 @@ func (cli *CommandLine) getBalance(address string) {
 	for _, out := range unspentTransactionsOutput {
 		balance += out.Value
 	}
-	fmt.Printf("Balance of %s: %d\n", address, balance)
+	fmt.Printf("Balance of " + color.Yellow + "%s: " + color.Green + "%d\n", address, balance)
 }
 
 func (cli *CommandLine) send(from, to string, amount int) {
@@ -103,7 +106,7 @@ func (cli *CommandLine) send(from, to string, amount int) {
 	defer chain.Database.Close()
 	tx := blockchain.NewTransaction(from, to, amount, chain)
 	chain.AddBlock([]*blockchain.Transaction{tx})
-	fmt.Println("Success!")
+	fmt.Println(color.Green + "Success!")
 }
 
 func (cli *CommandLine) Run() {

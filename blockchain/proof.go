@@ -5,9 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"log"
 	"math"
 	"math/big"
+
+	"github.com/rodolfoviolla/go-blockchain/handler"
 )
 
 const Difficulty = 12
@@ -64,8 +65,6 @@ func (pow *ProofOfWork) Validate() bool {
 
 func ToHex(num int64) []byte {
 	buff := new(bytes.Buffer)
-	if err := binary.Write(buff, binary.BigEndian, num); err != nil {
-		log.Panic(err)
-	}
+	handler.ErrorHandler(binary.Write(buff, binary.BigEndian, num))
 	return buff.Bytes()
 }

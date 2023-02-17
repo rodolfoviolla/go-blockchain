@@ -134,7 +134,7 @@ func (unspentTxOutputs *UnspentTxOutputsSet) DeleteByPrefix(prefix []byte) {
 			}
 			return nil
 		}); err != nil {
-			return nil
+			return err
 		}
 		return nil
 	}

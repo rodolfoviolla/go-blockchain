@@ -39,6 +39,13 @@ func (tx Transaction) Serialize() []byte {
 	return encoded.Bytes()
 }
 
+func DeserializeTransaction(data []byte) Transaction {
+	var transaction Transaction
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	handler.ErrorHandler(decoder.Decode(&transaction))
+	return transaction
+}
+
 func CoinbaseTx(to, data string) *Transaction {
 	if data == "" {
 		randomData := make([]byte, 24)
@@ -52,11 +59,9 @@ func CoinbaseTx(to, data string) *Transaction {
 	return &tx
 }
 
-func NewTransaction(from, to string, amount int, unspentTxOutputs *UnspentTxOutputsSet) *Transaction {
+func NewTransaction(w *wallet.Wallet, to string, amount int, unspentTxOutputs *UnspentTxOutputsSet) *Transaction {
 	var inputs []TxInput
 	var outputs []TxOutput
-	wallets := handler.ErrorHandler(wallet.CreateWallets())
-	w := wallets.GetWallet(from)
 	pubKeyHash := wallet.PublicKeyHash(w.PublicKey)
 	acc, validOutputs := unspentTxOutputs.FindSpendableOutputs(pubKeyHash, amount)
 	if acc < amount {
@@ -69,6 +74,7 @@ func NewTransaction(from, to string, amount int, unspentTxOutputs *UnspentTxOutp
 			inputs = append(inputs, input)
 		}
 	}
+	from := string(w.Address())
 	outputs = append(outputs, *NewTXOutput(amount, to))
 	if acc > amount {
 		outputs = append(outputs, *NewTXOutput(acc - amount, from))
